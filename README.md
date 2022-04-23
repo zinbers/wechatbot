@@ -6,6 +6,5 @@
 ## 1、准备一个单独的微信号，要一直在线，不能退出。
 ## 2、找台电脑，作为服务器，后面要长期运行。
 ## 3、安装python解析器
-## 4、安装itchat
-pip install itchat
+## 4、安装依赖模块 pip install requirements.txt
 ## 5、把代码运行起来。
