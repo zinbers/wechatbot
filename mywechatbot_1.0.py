@@ -56,16 +56,18 @@ def updateRoomID():
 	src_qun_key=[]
 	dst_qun_key=[]
 	robot_name_list=[]
-	def addMonitorQunInfo(src_key,dst_key,name):
+	limit_dispatch_list=[]
+	def addMonitorQunInfo(src_key,dst_key,name, limit_list=[]):
 		if src_key and dst_key and name:
 			src_qun_key.append(src_key)
 			dst_qun_key.append(dst_key)
 			robot_name_list.append(name)
+			limit_dispatch_list.append(limit_list)
 	#chatroom_rename={}
 	logging.info ('正在监测的群聊：{} 个'.format(len(chatrooms)))
-	addMonitorQunInfo('联络员', '799', '联络员机器人转述')
+	addMonitorQunInfo('联络员', '799', '联络员机器人转述',['@fdd02c3c14614d52e9447430226adad7afddcb769f899893ac498f3452b23115']) #25-yang
 	addMonitorQunInfo('团购', '799', '团购机器人转述')
-	addMonitorQunInfo('test_dst', 'test_src', '我是测试机器人')
+	addMonitorQunInfo('test_dst', 'test_src', '我是测试机器人',['@8dca648074ca0252a82a1a234314b0e80b70761e9ef28fc1ed1566a93f9ad5e2']) #hello
 	# src_qun_key=['联络员','团购','test_dst']
 	# dst_qun_key=['799','799','test_src']
 	# robot_name_list=['我是联络员机器人','我是团购机器人',"我是测试机器人"]
@@ -79,7 +81,8 @@ def updateRoomID():
 				'src_name':s_name,
 				'dst_name_list':l_name,
 				'primary_key':src_qun_key[i],
-				'relate_key':dst_qun_key[i]
+				'relate_key':dst_qun_key[i],
+				'limit_user':limit_dispatch_list[i]
 			}
 
 	logging.info(chatroom_info)
@@ -129,6 +132,12 @@ def group_reply_text(msg):
 	#print "chatroom_id" + chatroom_id
 	# 发送者的昵称
 	username = msg['ActualNickName']
+
+	realname = msg['ActualUserName']
+
+	limit_user_list=dict_info.get('limit_user')
+	if (len(limit_user_list) > 0) and (realname not in limit_user_list):
+		return
 	
 	group_name= dict_info.get('name')
 	#print group_name
