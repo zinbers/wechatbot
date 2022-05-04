@@ -12,12 +12,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import threading
 import copy
 import logging
+import hashlib
 
 #@itchat.msg_register(itchat.content.TEXT)
 #def text_reply(msg):
 #    return msg['Text']
 chatroom_info = {}
-
+msg_hash_cache_list=[]
 my_lock = threading.Lock()
 def getNotifyQunMap(rooms,src_key,dst_key):
 	src_id=None
@@ -112,13 +113,19 @@ def updateRoomID():
 @itchat.msg_register([TEXT], isGroupChat=True)
 def group_reply_text(msg):
 	# 消息来自于哪个群聊
-	
+	content = None
+	if msg['Type'] == TEXT:
+		content = msg['Content']
+	elif msg['Type'] == SHARING:
+		content = msg['Text']
 	# print("------------group message----------")
 	# print(msg)
-	if '@所有人' not in msg['Content']:
+	if not content:
+		return
+	if '@所有人' not in content:
 		return
 
-	if "\n- - - - - - - - - - - - - - -\n" in msg['Content']:
+	if "\n- - - - - - - - - - - - - - -\n" in content:
 		return
 
 	chatroom_id = msg['FromUserName']
@@ -136,26 +143,35 @@ def group_reply_text(msg):
 	realname = msg['ActualUserName']
 
 	limit_user_list=dict_info.get('limit_user')
-	if (len(limit_user_list) > 0) and (realname not in limit_user_list):
+	if limit_user_list and (realname not in limit_user_list):
 		return
-	
+
 	group_name= dict_info.get('name')
-	#print group_name
+	content_hash=hashlib.md5(content.encode('utf-8')).hexdigest()
+	logging.info("receive message,username:{},group_name:{},content:{},hash:{}".format(username,group_name,content,content_hash))
+	if content_hash in msg_hash_cache_list:
+		logging.info("this message has been dispatched!!! ignore")
+		return
 
-	if msg['Type'] == TEXT:
-		content = msg['Content']
-	elif msg['Type'] == SHARING:
-		content = msg['Text']
-
+	msg_hash_cache_list.append(content_hash)
+	
+	undelivery_item_list=dict_info.get('dst')
+	delivery_item_complete_list=[]
 	# 根据消息类型转发至其他需要同步消息的群聊
 	if msg['Type'] == TEXT:
 		logging.info("start dispatch message")
-		for item in dict_info.get('dst'):
-			itchat.send('%s—%s 的消息:\n%s' % (group_name,username, msg['Content']), item)
+		for item in undelivery_item_list:
+			if item in delivery_item_complete_list:
+				continue
+			delivery_item_complete_list.append(item)
+			itchat.send('%s—%s 的消息:\n%s' % (group_name,username, content), item)
 			time.sleep(random.uniform(1.0,2.0))
 	elif msg['Type'] == SHARING:
-		for item in dict_info.get('dst'):
-			itchat.send('%s-%s 分享：\n%s\n%s' % (group_name,username, msg['Text'], msg['Url']), item)
+		for item in undelivery_item_list:
+			if item in delivery_item_complete_list:
+				continue
+			delivery_item_complete_list.append(item)
+			itchat.send('%s-%s 分享：\n%s\n%s' % (group_name,username, content, msg['Url']), item)
 			time.sleep(random.uniform(1.0,2.0))
 
 # 自动回复图片等类别的群聊消息
