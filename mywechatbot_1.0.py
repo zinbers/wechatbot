@@ -13,12 +13,13 @@ import threading
 import copy
 import logging
 import hashlib
+import datetime
 
 #@itchat.msg_register(itchat.content.TEXT)
 #def text_reply(msg):
 #    return msg['Text']
 chatroom_info = {}
-msg_hash_cache_list=[]
+msg_hash_cache_dict={}
 my_lock = threading.Lock()
 def getNotifyQunMap(rooms,src_key,dst_key):
 	src_id=None
@@ -149,11 +150,14 @@ def group_reply_text(msg):
 	group_name= dict_info.get('name')
 	content_hash=hashlib.md5(content.encode('utf-8')).hexdigest()
 	logging.info("receive message,username:{},group_name:{},content:{},hash:{}".format(username,group_name,content,content_hash))
-	if content_hash in msg_hash_cache_list:
-		logging.info("this message has been dispatched!!! ignore")
-		return
+	if content_hash in msg_hash_cache_dict.keys():
+		time_diff=datetime.datetime.now() - msg_hash_cache_dict[content_hash]
+		diff_secs=time_diff.total_seconds()
+		if diff_secs < 10 * 60:  #10分钟内连续的2条相同的消息不在转发
+			logging.info("this message has been dispatched!!! ignore, diff_secs:{}".format(diff_secs))
+			return
 
-	msg_hash_cache_list.append(content_hash)
+	msg_hash_cache_dict[content_hash]=datetime.datetime.now()
 	
 	undelivery_item_list=dict_info.get('dst')
 	delivery_item_complete_list=[]
