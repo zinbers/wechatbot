@@ -67,7 +67,7 @@ def updateRoomID():
 			limit_dispatch_list.append(limit_list)
 	#chatroom_rename={}
 	logging.info ('正在监测的群聊：{} 个'.format(len(chatrooms)))
-	addMonitorQunInfo('联络员', '799', '联络员机器人转述',['@fdd02c3c14614d52e9447430226adad7afddcb769f899893ac498f3452b23115']) #25-yang
+	addMonitorQunInfo('联络员', '799', '联络员机器人转述',['@fdd02c3c14614d52e9447430226adad7afddcb769f899893ac498f3452b23115','@7e7ec01cb3fd1767a61ec463e1d9bff7']) #25-yang,zhou
 	addMonitorQunInfo('团购', '799', '团购机器人转述')
 	addMonitorQunInfo('test_dst', 'test_src', '我是测试机器人',['@8dca648074ca0252a82a1a234314b0e80b70761e9ef28fc1ed1566a93f9ad5e2']) #hello
 	# src_qun_key=['联络员','团购','test_dst']
